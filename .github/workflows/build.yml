@@ -7,7 +7,21 @@ on:
   workflow_dispatch:
 
 jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Jalankan aplikasi sungguhan (xvfb) dan uji
+        run: SHOTFLOW_SMOKE=1 timeout 90 xvfb-run -a npx electron . --no-sandbox --disable-gpu
+
   build:
+    needs: smoke
     strategy:
       fail-fast: false
       matrix:

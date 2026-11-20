@@ -1,5 +1,6 @@
 export type AspectRatio = '16:9' | '9:16' | '2.39:1' | '4:3' | '1:1'
 export type ShotSize = 'ECU' | 'CU' | 'MCU' | 'MS' | 'MLS' | 'WS' | 'EWS'
+export type ShotStatus = 'planned' | 'shot' | 'pick' | 'reshoot'
 export type Tool = 'pen' | 'line' | 'arrow'
 export type PrintLayout = 'portrait-2' | 'landscape-3' | 'landscape-2'
 
@@ -24,6 +25,7 @@ export interface Shot {
   audio: string
   notes: string
   duration: number // detik
+  status: ShotStatus
   image: string | null // data URL (sudah dikompres)
   fit: 'cover' | 'contain'
   strokes: Stroke[]

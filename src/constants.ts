@@ -1,4 +1,4 @@
-import type { AspectRatio, PrintLayout, ShotSize } from './types'
+import type { AspectRatio, PrintLayout, ShotSize, ShotStatus } from './types'
 
 export const ASPECTS: { value: AspectRatio; label: string; ratio: number }[] = [
   { value: '16:9', label: '16:9 · HD / YouTube', ratio: 16 / 9 },
@@ -40,3 +40,11 @@ export const SKETCH_WIDTHS = [
   { label: 'M', value: 8 },
   { label: 'L', value: 14 },
 ]
+
+export const STATUS_STYLE: Record<ShotStatus, { label: string; cls: string }> = {
+  planned: { label: 'Planned', cls: 'bg-white/10 text-mute' },
+  shot: { label: 'Shot', cls: 'bg-accent2/20 text-accent2' },
+  pick: { label: 'Pick', cls: 'bg-green-400/20 text-green-300' },
+  reshoot: { label: 'Reshoot', cls: 'bg-red-400/20 text-red-300' },
+}
+export const STATUS_LIST = Object.keys(STATUS_STYLE) as ShotStatus[]

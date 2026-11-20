@@ -1,6 +1,6 @@
 import { useStore, useActive } from '../store'
 import { ASPECTS, FPS_OPTIONS, PRINT_LAYOUTS } from '../constants'
-import { fmtDuration, projectStats } from '../lib/project'
+import { fmtDuration, projectStats, TEMPLATES } from '../lib/project'
 import { exportCsv, exportJson, importJson, printPdf } from '../lib/io'
 import type { AspectRatio, PrintLayout } from '../types'
 import { Icon } from './Icon'
@@ -72,14 +72,18 @@ export function Topbar() {
               ))}
             </div>
             <div className="my-1 border-t border-line" />
-            <MenuItem
-              onClick={() => {
-                st().newProject()
-                close()
-              }}
-            >
-              <Icon name="plus" size={14} /> Proyek baru
-            </MenuItem>
+            <div className="px-2.5 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-mute">Proyek baru</div>
+            {TEMPLATES.map((t) => (
+              <MenuItem
+                key={t.key}
+                onClick={() => {
+                  st().newProject(t.key)
+                  close()
+                }}
+              >
+                <Icon name="plus" size={14} /> {t.label}
+              </MenuItem>
+            ))}
             <MenuItem
               onClick={() => {
                 st().duplicateProject()
@@ -146,6 +150,7 @@ export function Topbar() {
       <div className="flex items-center gap-4 font-mono text-[12px]">
         <Stat label="SHOT" value={String(stats.shots)} />
         <Stat label="SCENE" value={String(stats.scenes)} />
+        <Stat label="TERAMBIL" value={`${stats.done}/${stats.shots}`} />
         <Stat label="DURASI" value={fmtDuration(stats.duration)} accent />
         <span className={`text-[11px] ${saveState === 'saved' ? 'text-mute' : 'text-accent'}`}>{saveState === 'saved' ? '● Tersimpan' : '○ Menyimpan…'}</span>
       </div>

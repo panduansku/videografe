@@ -33,6 +33,41 @@ function createWindow() {
 
   win.once('ready-to-show', () => win.show())
 
+  // Mode uji otomatis (CI): jalankan UI sungguhan, cek render, tambah shot, dan cek data tersimpan.
+  if (process.env.SHOTFLOW_SMOKE) {
+    const fail = (msg) => {
+      console.error('SMOKE FAIL:', msg)
+      app.exit(1)
+    }
+    win.webContents.on('render-process-gone', (_e, d) => fail('renderer crash ' + d.reason))
+    win.webContents.on('console-message', (_e, level, message) => {
+      if (level >= 3) console.error('RENDERER ERROR:', message)
+    })
+    win.webContents.on('did-finish-load', async () => {
+      try {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+        const count = () => win.webContents.executeJavaScript("document.querySelectorAll('[draggable=true]').length")
+        await wait(1500)
+        const hasApi = await win.webContents.executeJavaScript('!!window.shotflow')
+        const before = await count()
+        if (!hasApi) return fail('window.shotflow tidak tersedia')
+        if (before < 1) return fail('kartu shot tidak muncul')
+        await win.webContents.executeJavaScript(
+          "Array.from(document.querySelectorAll('button')).find((b) => b.textContent.trim() === 'Tambah shot').click()",
+        )
+        await wait(1500)
+        const after = await count()
+        if (after !== before + 1) return fail(`tambah shot gagal (${before} -> ${after})`)
+        const saved = await fs.readFile(dataFile(), 'utf8').then((t) => JSON.parse(t)).catch(() => null)
+        if (!saved || !saved.projects || !saved.projects[0] || saved.projects[0].shots.length !== after) return fail('autosave tidak sesuai')
+        console.log(`SMOKE OK: ${before} -> ${after} shot, autosave valid`)
+        app.exit(0)
+      } catch (e) {
+        fail(String(e))
+      }
+    })
+  }
+
   // Link eksternal dibuka di browser default, bukan di jendela app.
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//.test(url)) shell.openExternal(url)

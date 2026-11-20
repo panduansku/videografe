@@ -1,6 +1,6 @@
 import { useRef, type DragEvent, type ReactNode } from 'react'
 import { useActive, useStore } from '../store'
-import { ANGLES, LENS_SUGGESTIONS, MOVEMENTS, SHOT_SIZES, ratioOf } from '../constants'
+import { ANGLES, LENS_SUGGESTIONS, MOVEMENTS, SHOT_SIZES, STATUS_LIST, STATUS_STYLE, ratioOf } from '../constants'
 import { fmtDuration, shotLabel } from '../lib/project'
 import { firstImageFile, setShotImage } from '../lib/image'
 import type { Shot, ShotSize } from '../types'
@@ -161,6 +161,22 @@ export function Inspector() {
           />
           Penomoran shot otomatis per scene
         </label>
+      </Section>
+
+      <Section title="Status Syuting">
+        <div className="flex flex-wrap gap-1">
+          {STATUS_LIST.map((v) => (
+            <button
+              key={v}
+              onClick={() => set({ status: v })}
+              className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold ${
+                shot.status === v ? `border-transparent ${STATUS_STYLE[v].cls} ring-1 ring-current` : 'border-line bg-panel2 text-mute hover:text-text'
+              }`}
+            >
+              {STATUS_STYLE[v].label}
+            </button>
+          ))}
+        </div>
       </Section>
 
       <Section title="Framing & Kamera">

@@ -1,6 +1,8 @@
-import { useCallback, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useMemo, useRef, useState, type DragEvent } from 'react'
 import { useActive, useStore } from '../store'
-import { ratioOf } from '../constants'
+import { STATUS_LIST, STATUS_STYLE, ratioOf } from '../constants'
+import { shotLabel } from '../lib/project'
+import type { ShotStatus } from '../types'
 import { firstImageFile, setShotImage } from '../lib/image'
 import { ShotCard } from './ShotCard'
 import { Icon } from './Icon'
@@ -17,6 +19,18 @@ export function ShotGrid() {
   const dragRef = useRef<string | null>(null)
 
   const ratio = ratioOf(project.aspect)
+
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | ShotStatus>('all')
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return project.shots.filter((s) => {
+      if (statusFilter !== 'all' && s.status !== statusFilter) return false
+      if (!q) return true
+      return [shotLabel(s), s.size, s.angle, s.movement, s.lens, s.lighting, s.audio, s.notes].join(' ').toLowerCase().includes(q)
+    })
+  }, [project.shots, query, statusFilter])
+  const filtering = query.trim() !== '' || statusFilter !== 'all'
 
   const onDragStart = useCallback((id: string) => {
     dragRef.current = id
@@ -58,7 +72,24 @@ export function ShotGrid() {
       <div className="flex h-11 shrink-0 items-center justify-between border-b border-line px-5">
         <div className="flex items-center gap-2 text-[12px] text-mute">
           <span className="font-semibold uppercase tracking-[0.12em] text-text">Storyboard</span>
-          <span className="font-mono">· seret kartu untuk mengurutkan · klik ganda untuk sketsa</span>
+          <span className="font-mono">{filtering ? `· ${visible.length}/${project.shots.length} shot` : '· seret kartu · klik ganda untuk sketsa'}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            className="input !w-52 !py-1"
+            placeholder="Cari scene, catatan, lensa…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            spellCheck={false}
+          />
+          <select className="input !w-auto !py-1" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ShotStatus)}>
+            <option value="all">Semua status</option>
+            {STATUS_LIST.map((v) => (
+              <option key={v} value={v}>
+                {STATUS_STYLE[v].label}
+              </option>
+            ))}
+          </select>
         </div>
         <label className="flex items-center gap-2 text-[11px] text-mute">
           Ukuran kartu
@@ -76,7 +107,7 @@ export function ShotGrid() {
 
       <div className="flex-1 overflow-y-auto p-5" onClick={(e) => e.target === e.currentTarget && useStore.getState().select(null)}>
         <div className="grid items-start gap-4" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${cardSize}px, 1fr))` }}>
-          {project.shots.map((s, i) => (
+          {visible.map((s) => (
             <ShotCard
               key={s.id}
               shot={s}

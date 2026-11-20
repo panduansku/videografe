@@ -2,6 +2,7 @@ import { memo, type DragEvent } from 'react'
 import type { Shot } from '../types'
 import { fmtDuration, shotLabel } from '../lib/project'
 import { useStore } from '../store'
+import { STATUS_STYLE } from '../constants'
 import { Frame } from './Frame'
 import { Icon } from './Icon'
 
@@ -36,6 +37,9 @@ export const ShotCard = memo(function ShotCard({ shot, ratio, selected, dragging
       style={portrait ? { width: 'auto' } : undefined}
     >
       <span className="absolute left-2 top-2 rounded bg-black/65 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-accent">{shotLabel(shot)}</span>
+      {shot.status !== 'planned' && (
+        <span className={`absolute bottom-2 left-2 rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_STYLE[shot.status].cls}`}>{STATUS_STYLE[shot.status].label}</span>
+      )}
       <span className="absolute bottom-2 right-2 rounded bg-black/65 px-1.5 py-0.5 font-mono text-[11px] text-text">{fmtDuration(shot.duration)}</span>
 
       <div className="absolute right-1.5 top-1.5 flex gap-0.5 rounded-md bg-black/70 p-0.5 opacity-0 transition-opacity group-hover:opacity-100">

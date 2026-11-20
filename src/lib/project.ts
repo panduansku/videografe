@@ -1,5 +1,5 @@
-import type { AspectRatio, Project, Shot, ShotSize, Stroke } from '../types'
-import { ASPECTS, SHOT_SIZES } from '../constants'
+import type { AspectRatio, Project, Shot, ShotSize, ShotStatus, Stroke } from '../types'
+import { ASPECTS, SHOT_SIZES, STATUS_LIST } from '../constants'
 
 export const uid = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -31,6 +31,7 @@ export function blankShot(p: Pick<Project, 'defaultLens'>, ref?: Shot): Shot {
     audio: '',
     notes: '',
     duration: ref?.duration ?? 3,
+    status: 'planned',
     image: null,
     fit: 'cover',
     strokes: [],
@@ -107,6 +108,7 @@ function normalizeShot(raw: any, fresh: boolean, defaultLens: string): Shot {
     audio: str(raw?.audio, ''),
     notes: str(raw?.notes, ''),
     duration: Math.max(0, num(raw?.duration, 3)),
+    status: (STATUS_LIST.includes(raw?.status) ? raw.status : 'planned') as ShotStatus,
     image: typeof raw?.image === 'string' && raw.image.startsWith('data:image/') ? raw.image : null,
     fit: raw?.fit === 'contain' ? 'contain' : 'cover',
     strokes: Array.isArray(raw?.strokes) ? (raw.strokes.map(normalizeStroke).filter(Boolean) as Stroke[]) : [],
@@ -137,5 +139,76 @@ export function projectStats(p: Project) {
     shots: p.shots.length,
     scenes: new Set(p.shots.map((s) => s.scene)).size,
     duration: p.shots.reduce((a, s) => a + s.duration, 0),
+    done: p.shots.filter((s) => s.status === 'shot' || s.status === 'pick').length,
   }
+}
+
+// ---------- template proyek ----------
+type Row = [scene: string, size: ShotSize, angle: string, movement: string, lens: string, duration: number, notes: string]
+
+const TEMPLATE_DATA: Record<string, { name: string; fps: number; lens: string; rows: Row[] }> = {
+  'talking-head': {
+    name: 'YouTube Talking Head + B-Roll',
+    fps: 30,
+    lens: '50mm',
+    rows: [
+      ['01', 'MS', 'Eye Level', 'Static', '50mm', 8, 'Hook: presenter bicara ke kamera.'],
+      ['01', 'CU', 'Eye Level', 'Static', '85mm', 6, 'Poin utama, punch-in.'],
+      ['02', 'CU', 'Eye Level', 'Slider', '35mm', 4, 'B-roll: detail produk/aktivitas.'],
+      ['02', 'WS', 'High Angle', 'Static', '24mm', 4, 'B-roll: suasana/ruang.'],
+      ['03', 'MS', 'Eye Level', 'Static', '50mm', 6, 'CTA dan outro.'],
+    ],
+  },
+  tvc30: {
+    name: 'TVC / Iklan 30 Detik',
+    fps: 24,
+    lens: '35mm',
+    rows: [
+      ['01', 'EWS', "Bird's Eye", 'Crane/Drone', '24mm', 4, 'Establishing lokasi.'],
+      ['01', 'MS', 'Eye Level', 'Gimbal', '35mm', 5, 'Masalah/situasi talent.'],
+      ['02', 'CU', 'Eye Level', 'Handheld', '50mm', 4, 'Reaksi talent.'],
+      ['02', 'ECU', 'Low Angle', 'Slider', '100mm macro', 3, 'Hero shot produk.'],
+      ['03', 'MS', 'Eye Level', 'Static', '35mm', 6, 'Talent memakai produk.'],
+      ['03', 'WS', 'Eye Level', 'Dolly/Tracking', '24mm', 5, 'Resolusi / lifestyle.'],
+      ['04', 'MCU', 'Eye Level', 'Static', '50mm', 3, 'Packshot, logo, tagline.'],
+    ],
+  },
+  event: {
+    name: 'Event Highlight',
+    fps: 30,
+    lens: '35mm',
+    rows: [
+      ['01', 'EWS', "Bird's Eye", 'Crane/Drone', '24mm', 4, 'Suasana venue.'],
+      ['01', 'WS', 'Eye Level', 'Gimbal', '24mm', 4, 'Crowd dan dekorasi.'],
+      ['02', 'MS', 'Eye Level', 'Handheld', '35mm', 5, 'Pembicara/performer di panggung.'],
+      ['02', 'CU', 'Eye Level', 'Handheld', '85mm', 4, 'Reaksi audiens.'],
+      ['03', 'ECU', 'Eye Level', 'Static', '100mm', 3, 'Detail: tangan, logo, hidangan.'],
+      ['03', 'MLS', 'Eye Level', 'Gimbal', '35mm', 5, 'Interaksi tamu.'],
+      ['04', 'WS', 'Eye Level', 'Static', '24mm', 4, 'Penutup, suasana akhir.'],
+    ],
+  },
+}
+
+export const TEMPLATES = [
+  { key: 'blank', label: 'Proyek kosong' },
+  ...Object.entries(TEMPLATE_DATA).map(([key, t]) => ({ key, label: t.name })),
+]
+
+export function createFromTemplate(key: string): Project {
+  const t = TEMPLATE_DATA[key]
+  if (!t) return createProject()
+  const p = createProject(t.name)
+  p.fps = t.fps
+  p.defaultLens = t.lens
+  p.shots = t.rows.map(([scene, size, angle, movement, lens, duration, notes]) => ({
+    ...blankShot(p),
+    scene,
+    size,
+    angle,
+    movement,
+    lens,
+    duration,
+    notes,
+  }))
+  return withNumbers(p)
 }

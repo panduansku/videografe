@@ -88,8 +88,8 @@ export async function importJson(): Promise<Project | null> {
 const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
 
 export function exportCsv(p: Project): Promise<boolean> {
-  const head = ['Scene', 'Shot', 'Shot Size', 'Camera Angle', 'Movement', 'Lens', 'Lighting/Mood', 'Audio/Dialogue', 'Catatan Visual', 'Durasi (detik)']
-  const rows = p.shots.map((s) => [pad(s.scene), pad(s.shot), s.size, s.angle, s.movement, s.lens, s.lighting, s.audio, s.notes, s.duration])
+  const head = ['Scene', 'Shot', 'Shot Size', 'Camera Angle', 'Movement', 'Lens', 'Lighting/Mood', 'Audio/Dialogue', 'Catatan Visual', 'Durasi (detik)', 'Status']
+  const rows = p.shots.map((s) => [pad(s.scene), pad(s.shot), s.size, s.angle, s.movement, s.lens, s.lighting, s.audio, s.notes, s.duration, s.status])
   const csv = '﻿' + [head, ...rows].map((r) => r.map(esc).join(',')).join('\r\n')
   return saveTextFile(`${safeName(p.name)}.csv`, csv, 'text/csv', 'CSV', 'csv')
 }

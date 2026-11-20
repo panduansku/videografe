@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { AspectRatio, Persisted, PrintLayout, Project, Shot } from './types'
-import { blankShot, createProject, createSampleProject, normalizeProject, uid, withNumbers } from './lib/project'
+import { blankShot, createFromTemplate, createProject, createSampleProject, normalizeProject, uid, withNumbers } from './lib/project'
 
 type ProjectMeta = Partial<Pick<Project, 'name' | 'aspect' | 'fps' | 'defaultLens' | 'autoNumber'>>
 
@@ -22,7 +22,7 @@ interface State {
   select: (id: string | null) => void
   setSketch: (id: string | null) => void
 
-  newProject: () => void
+  newProject: (template?: string) => void
   switchProject: (id: string) => void
   updateProject: (patch: ProjectMeta) => void
   duplicateProject: () => void
@@ -84,8 +84,8 @@ export const useStore = create<State>()((set, get) => {
     setSketch: (id) => set({ sketchId: id }),
 
     // ---------- proyek ----------
-    newProject: () => {
-      const p = createProject()
+    newProject: (template = 'blank') => {
+      const p = createFromTemplate(template)
       set((s) => ({ projects: [...s.projects, p], activeId: p.id, selectedId: p.shots[0].id }))
     },
 
