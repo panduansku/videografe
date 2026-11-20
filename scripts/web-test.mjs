@@ -111,7 +111,9 @@ for (const [name, opts, compact] of profiles) {
       })
       ok(m.status === 200 && m.json.display === 'standalone' && m.json.icons.length >= 3, 'manifest valid (standalone + ikon)')
       ok(m.apple, 'apple-touch-icon terpasang')
-      await page.evaluate(() => navigator.serviceWorker.ready)
+      await page.evaluate(() =>
+        Promise.race([navigator.serviceWorker.ready, new Promise((_, rej) => setTimeout(() => rej(new Error('service worker tidak aktif dalam 15 dtk')), 15000))]),
+      )
       const cached = await page.evaluate(async () => {
         const keys = await caches.keys()
         const c = await caches.open(keys[0])
