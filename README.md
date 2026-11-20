@@ -15,6 +15,19 @@ Alternatif tanpa Node di PC: unggah folder ini ke repo GitHub, buka tab **Action
 
 Catatan: installer belum ditandatangani (code signing), jadi Windows SmartScreen bisa menampilkan "Windows protected your PC". Klik **More info → Run anyway**. Untuk menghilangkannya perlu sertifikat code signing berbayar.
 
+## Versi iPad / browser (PWA)
+
+Alamat: `https://panduansku.github.io/videografe/` (aktif setelah GitHub Pages diaktifkan, lihat di bawah).
+
+Pasang di iPad: buka alamat itu di **Safari** → tombol **Bagikan** → **Tambah ke Layar Utama**. Setelah itu ShotFlow terbuka seperti aplikasi biasa (layar penuh) dan tetap bisa dipakai **offline**.
+
+- Data tersimpan di IndexedDB perangkat (tanpa batas 5 MB localStorage). Backup dan pindah ke PC: **Ekspor JSON** di iPad, lalu **Impor JSON** di PC (atau sebaliknya).
+- Tata letak ringkas: ketuk kartu untuk membuka panel detail; geser urutan dengan tombol ◀ ▶ di panel (atau Alt+←/→).
+- Sketsa bisa memakai jari atau Apple Pencil. PDF: Ekspor → Cetak, lalu Bagikan → Simpan ke Berkas.
+- Data di iPad terpisah dari data di PC.
+
+Aktifkan hosting sekali saja: repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**, lalu **Actions → Build installers → Run workflow**.
+
 ## Keamanan (sudah diterapkan)
 
 - `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`; renderer hanya mengakses 5 fungsi di `window.shotflow`.
