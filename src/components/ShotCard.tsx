@@ -42,7 +42,7 @@ export const ShotCard = memo(function ShotCard({ shot, ratio, selected, dragging
       )}
       <span className="absolute bottom-2 right-2 rounded bg-black/65 px-1.5 py-0.5 font-mono text-[11px] text-text">{fmtDuration(shot.duration)}</span>
 
-      <div className="absolute right-1.5 top-1.5 flex gap-0.5 rounded-md bg-black/70 p-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="card-actions absolute right-1.5 top-1.5 flex gap-0.5 rounded-md bg-black/70 p-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         <button className="btn-icon !h-6 !w-6" title="Sisipkan shot setelah ini" onClick={(e) => { e.stopPropagation(); st().addShot(shot.id) }}>
           <Icon name="plus" size={14} />
         </button>

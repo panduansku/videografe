@@ -25,7 +25,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function Inspector() {
+export function Inspector({ onClose }: { onClose?: () => void } = {}) {
   const project = useActive()
   const selectedId = useStore((s) => s.selectedId)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -79,6 +79,12 @@ export function Inspector() {
           </div>
         </div>
         <div className="flex gap-0.5">
+          <button className="btn-icon" title="Geser ke kiri (Alt+←)" aria-label="Geser ke kiri" onClick={() => st().moveShotBy(shot.id, -1)}>
+            <Icon name="left" />
+          </button>
+          <button className="btn-icon" title="Geser ke kanan (Alt+→)" aria-label="Geser ke kanan" onClick={() => st().moveShotBy(shot.id, 1)}>
+            <Icon name="right" />
+          </button>
           <button className="btn-icon" title="Sisipkan shot setelah ini" onClick={() => st().addShot(shot.id)}>
             <Icon name="plus" />
           </button>
@@ -92,6 +98,11 @@ export function Inspector() {
           >
             <Icon name="trash" />
           </button>
+          {onClose && (
+            <button className="btn-icon" title="Tutup" aria-label="Tutup panel" onClick={onClose}>
+              <Icon name="x" />
+            </button>
+          )}
         </div>
       </div>
 

@@ -16,6 +16,41 @@ body {
   @apply bg-bg font-sans text-text antialiased;
   overflow: hidden;
   font-size: 14px;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app-root {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+img {
+  -webkit-touch-callout: none;
+}
+
+/* Layar sentuh (iPad): kontrol lebih besar, tanpa zoom otomatis iOS saat fokus input. */
+@media (pointer: coarse) {
+  .input {
+    font-size: 16px;
+    min-height: 40px;
+  }
+  .btn {
+    min-height: 38px;
+  }
+  .btn-icon,
+  .card-actions .btn-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .card-actions {
+    opacity: 1 !important;
+  }
+}
+@media (hover: none) {
+  .card-actions {
+    opacity: 1 !important;
+  }
 }
 
 ::-webkit-scrollbar {

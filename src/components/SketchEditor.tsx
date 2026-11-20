@@ -82,10 +82,10 @@ function Editor({ shot, ratio }: { shot: Shot; ratio: number }) {
     setDraft(null)
   }
 
-  const frameW = `min(90vw, calc((100vh - 220px) * ${ratio}))`
+  const frameW = `min(90vw, calc((100dvh - 220px) * ${ratio}))`
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-black/80 p-4">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 overflow-y-auto bg-black/80 p-4">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-panel px-3 py-2 shadow-2xl">
         <span className="font-mono text-[12px] font-bold text-accent">{shotLabel(shot)}</span>

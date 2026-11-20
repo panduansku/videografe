@@ -2,6 +2,7 @@ import { useStore, useActive } from '../store'
 import { ASPECTS, FPS_OPTIONS, PRINT_LAYOUTS } from '../constants'
 import { fmtDuration, projectStats, TEMPLATES } from '../lib/project'
 import { exportCsv, exportJson, importJson, printPdf } from '../lib/io'
+import { COMPACT_QUERY, useMedia } from '../lib/useMedia'
 import type { AspectRatio, PrintLayout } from '../types'
 import { Icon } from './Icon'
 import { MenuItem, Popover } from './Popover'
@@ -11,6 +12,7 @@ export function Topbar() {
   const projects = useStore((s) => s.projects)
   const saveState = useStore((s) => s.saveState)
   const printLayout = useStore((s) => s.printLayout)
+  const compact = useMedia(COMPACT_QUERY)
   const st = useStore.getState
   const stats = projectStats(project)
 
@@ -33,24 +35,60 @@ export function Topbar() {
       return p
     })
 
+  const settings = (
+    <>
+      <select
+        className="input !w-auto"
+        value={project.aspect}
+        onChange={(e) => st().updateProject({ aspect: e.target.value as AspectRatio })}
+        title="Aspect ratio"
+        aria-label="Aspect ratio"
+      >
+        {ASPECTS.map((a) => (
+          <option key={a.value} value={a.value}>
+            {a.label}
+          </option>
+        ))}
+      </select>
+      <select className="input !w-auto" value={project.fps} onChange={(e) => st().updateProject({ fps: Number(e.target.value) })} title="Frame rate" aria-label="Frame rate">
+        {FPS_OPTIONS.map((f) => (
+          <option key={f} value={f}>
+            {f} fps
+          </option>
+        ))}
+      </select>
+      <input
+        className="input !w-36"
+        value={project.defaultLens}
+        onChange={(e) => st().updateProject({ defaultLens: e.target.value })}
+        placeholder="Lensa default"
+        title="Lens / kamera default untuk shot baru"
+        aria-label="Lensa default"
+        spellCheck={false}
+      />
+    </>
+  )
+
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-panel px-4">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-panel px-3 lg:gap-3 lg:px-4">
       {/* Logo */}
       <div className="flex items-center gap-2 pr-1">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-[#1a1407]">
           <Icon name="film" size={16} />
         </div>
-        <span className="text-[15px] font-bold tracking-tight">
-          Shot<span className="text-accent">Flow</span>
-        </span>
+        {!compact && (
+          <span className="text-[15px] font-bold tracking-tight">
+            Shot<span className="text-accent">Flow</span>
+          </span>
+        )}
       </div>
 
       {/* Menu proyek + nama */}
       <Popover
         width="w-72"
         trigger={() => (
-          <button className="btn">
-            Proyek <Icon name="chevron" size={14} />
+          <button className="btn" aria-label="Menu proyek">
+            {compact ? <Icon name="film" size={14} /> : 'Proyek'} <Icon name="chevron" size={14} />
           </button>
         )}
       >
@@ -84,6 +122,7 @@ export function Topbar() {
                 <Icon name="plus" size={14} /> {t.label}
               </MenuItem>
             ))}
+            <div className="my-1 border-t border-line" />
             <MenuItem
               onClick={() => {
                 st().duplicateProject()
@@ -110,61 +149,53 @@ export function Topbar() {
         onChange={(e) => st().updateProject({ name: e.target.value })}
         spellCheck={false}
         aria-label="Nama proyek"
-        className="w-64 rounded-md border border-transparent bg-transparent px-2 py-1 text-[15px] font-semibold outline-none hover:border-line focus:border-accent/70 focus:bg-panel2"
+        className={`${compact ? 'w-40 min-w-0 flex-1 sm:flex-none' : 'w-64'} rounded-md border border-transparent bg-transparent px-2 py-1 text-[15px] font-semibold outline-none hover:border-line focus:border-accent/70 focus:bg-panel2`}
       />
 
-      {/* Pengaturan proyek */}
-      <div className="ml-1 flex items-center gap-2">
-        <select
-          className="input !w-auto"
-          value={project.aspect}
-          onChange={(e) => st().updateProject({ aspect: e.target.value as AspectRatio })}
-          title="Aspect ratio"
+      {/* Pengaturan proyek: inline di layar lebar, popover di layar ringkas */}
+      {compact ? (
+        <Popover
+          width="w-64"
+          trigger={() => (
+            <button className="btn" aria-label="Setelan proyek">
+              {project.aspect} · {project.fps}fps <Icon name="chevron" size={14} />
+            </button>
+          )}
         >
-          {ASPECTS.map((a) => (
-            <option key={a.value} value={a.value}>
-              {a.label}
-            </option>
-          ))}
-        </select>
-        <select className="input !w-auto" value={project.fps} onChange={(e) => st().updateProject({ fps: Number(e.target.value) })} title="Frame rate">
-          {FPS_OPTIONS.map((f) => (
-            <option key={f} value={f}>
-              {f} fps
-            </option>
-          ))}
-        </select>
-        <input
-          className="input !w-36"
-          value={project.defaultLens}
-          onChange={(e) => st().updateProject({ defaultLens: e.target.value })}
-          placeholder="Lensa default"
-          title="Lens / kamera default untuk shot baru"
-          spellCheck={false}
-        />
-      </div>
+          {() => (
+            <div className="flex flex-col gap-2 p-1.5">
+              <span className="label !mb-0">Setelan proyek</span>
+              {settings}
+            </div>
+          )}
+        </Popover>
+      ) : (
+        <div className="ml-1 flex items-center gap-2">{settings}</div>
+      )}
 
       <div className="flex-1" />
 
       {/* Ringkasan */}
-      <div className="flex items-center gap-4 font-mono text-[12px]">
+      <div className="flex items-center gap-3 font-mono text-[12px] lg:gap-4">
         <Stat label="SHOT" value={String(stats.shots)} />
-        <Stat label="SCENE" value={String(stats.scenes)} />
-        <Stat label="TERAMBIL" value={`${stats.done}/${stats.shots}`} />
+        {!compact && <Stat label="SCENE" value={String(stats.scenes)} />}
+        {!compact && <Stat label="TERAMBIL" value={`${stats.done}/${stats.shots}`} />}
         <Stat label="DURASI" value={fmtDuration(stats.duration)} accent />
-        <span className={`text-[11px] ${saveState === 'saved' ? 'text-mute' : 'text-accent'}`}>{saveState === 'saved' ? '● Tersimpan' : '○ Menyimpan…'}</span>
+        {!compact && (
+          <span className={`text-[11px] ${saveState === 'saved' ? 'text-mute' : 'text-accent'}`}>{saveState === 'saved' ? '● Tersimpan' : '○ Menyimpan…'}</span>
+        )}
       </div>
 
-      <button className="btn btn-primary" onClick={() => st().addShot(st().selectedId)} title="Tambah shot setelah shot terpilih (N)">
-        <Icon name="plus" size={15} /> Shot
+      <button className="btn btn-primary" onClick={() => st().addShot(st().selectedId)} title="Tambah shot setelah shot terpilih (N)" aria-label="Tambah shot">
+        <Icon name="plus" size={15} /> {!compact && 'Shot'}
       </button>
 
       <Popover
         align="right"
         width="w-72"
         trigger={() => (
-          <button className="btn">
-            <Icon name="download" size={15} /> Ekspor <Icon name="chevron" size={14} />
+          <button className="btn" aria-label="Ekspor">
+            <Icon name="download" size={15} /> {!compact && 'Ekspor'} <Icon name="chevron" size={14} />
           </button>
         )}
       >

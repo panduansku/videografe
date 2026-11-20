@@ -20,8 +20,58 @@ jobs:
       - name: Jalankan aplikasi sungguhan (xvfb) dan uji
         run: SHOTFLOW_SMOKE=1 timeout 90 xvfb-run -a npx electron . --no-sandbox --disable-gpu
 
+  webtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: npm install --no-save --no-audit --no-fund playwright@1.49.1
+      - run: npx playwright install --with-deps chromium
+      - name: Uji web/PWA (emulasi iPad dan desktop)
+        run: |
+          npx vite preview --port 4173 --strictPort &
+          npx wait-on tcp:4173
+          node scripts/web-test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-screenshots
+          path: shots/*.png
+
+  pages:
+    needs: [smoke, webtest]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
   build:
-    needs: smoke
+    needs: [smoke, webtest]
     strategy:
       fail-fast: false
       matrix:

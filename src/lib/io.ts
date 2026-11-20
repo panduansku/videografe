@@ -3,10 +3,41 @@ import { normalizeProject, pad } from './project'
 
 const KEY = 'shotflow:v1'
 
+// ---------- IndexedDB (mode browser / iPad): tanpa batas 5 MB milik localStorage ----------
+function openDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('shotflow', 1)
+    req.onupgradeneeded = () => req.result.createObjectStore('kv')
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+async function idbGet(key: string): Promise<string | null> {
+  const db = await openDb()
+  return new Promise((resolve, reject) => {
+    const r = db.transaction('kv', 'readonly').objectStore('kv').get(key)
+    r.onsuccess = () => resolve(typeof r.result === 'string' ? r.result : null)
+    r.onerror = () => reject(r.error)
+  })
+}
+
+async function idbSet(key: string, value: string): Promise<void> {
+  const db = await openDb()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('kv', 'readwrite')
+    tx.objectStore('kv').put(value, key)
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}
+
 // ---------- penyimpanan otomatis ----------
 export async function loadData(): Promise<Persisted | null> {
   try {
-    const raw = window.shotflow ? await window.shotflow.load() : localStorage.getItem(KEY)
+    let raw: string | null
+    if (window.shotflow) raw = await window.shotflow.load()
+    else raw = (await idbGet(KEY).catch(() => null)) ?? localStorage.getItem(KEY) // localStorage = data versi lama
     if (!raw) return null
     const d = JSON.parse(raw)
     return d && Array.isArray(d.projects) ? (d as Persisted) : null
@@ -20,10 +51,11 @@ export async function saveData(d: Persisted): Promise<boolean> {
   const json = JSON.stringify(d)
   if (window.shotflow) return window.shotflow.save(json)
   try {
-    localStorage.setItem(KEY, json)
+    await idbSet(KEY, json)
     return true
-  } catch {
-    return false // kemungkinan kuota localStorage penuh (mode browser). Di Electron tidak ada batas ini.
+  } catch (e) {
+    console.error('save failed', e)
+    return false // penyimpanan browser penuh atau diblokir (mis. mode privat)
   }
 }
 

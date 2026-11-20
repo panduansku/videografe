@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { AspectRatio, Persisted, PrintLayout, Project, Shot } from './types'
+import { isCompact } from './lib/useMedia'
 import { blankShot, createFromTemplate, createProject, createSampleProject, normalizeProject, uid, withNumbers } from './lib/project'
 
 type ProjectMeta = Partial<Pick<Project, 'name' | 'aspect' | 'fps' | 'defaultLens' | 'autoNumber'>>
@@ -14,6 +15,7 @@ interface State {
   toast: string | null
   saveState: 'saved' | 'dirty'
   sketchId: string | null
+  inspectorOpen: boolean
 
   hydrate: (d: Persisted | null) => void
   notify: (msg: string) => void
@@ -21,6 +23,7 @@ interface State {
   setPrintLayout: (l: PrintLayout) => void
   select: (id: string | null) => void
   setSketch: (id: string | null) => void
+  setInspector: (open: boolean) => void
 
   newProject: (template?: string) => void
   switchProject: (id: string) => void
@@ -34,6 +37,7 @@ interface State {
   duplicateShot: (id: string) => void
   deleteShot: (id: string) => void
   moveShot: (dragId: string, targetId: string, after: boolean) => void
+  moveShotBy: (id: string, delta: number) => void
 }
 
 let toastTimer: number | undefined
@@ -56,6 +60,7 @@ export const useStore = create<State>()((set, get) => {
     toast: null,
     saveState: 'saved',
     sketchId: null,
+    inspectorOpen: false,
 
     hydrate: (d) => {
       let projects = (d?.projects ?? []).map((p) => normalizeProject(p, false))
@@ -80,8 +85,10 @@ export const useStore = create<State>()((set, get) => {
 
     setCardSize: (n) => set({ cardSize: n }),
     setPrintLayout: (l) => set({ printLayout: l }),
-    select: (id) => set({ selectedId: id }),
+    // Di layar ringkas (iPad) memilih shot langsung membuka panel inspector.
+    select: (id) => set({ selectedId: id, inspectorOpen: id !== null && isCompact() }),
     setSketch: (id) => set({ sketchId: id }),
+    setInspector: (open) => set({ inspectorOpen: open }),
 
     // ---------- proyek ----------
     newProject: (template = 'blank') => {
@@ -91,7 +98,7 @@ export const useStore = create<State>()((set, get) => {
 
     switchProject: (id) => {
       const p = get().projects.find((x) => x.id === id)
-      if (p) set({ activeId: id, selectedId: p.shots[0]?.id ?? null, sketchId: null })
+      if (p) set({ activeId: id, selectedId: p.shots[0]?.id ?? null, sketchId: null, inspectorOpen: false })
     },
 
     updateProject: (patch) =>
@@ -127,7 +134,7 @@ export const useStore = create<State>()((set, get) => {
         shots.splice(idx + 1, 0, shot)
         return withNumbers({ ...p, shots })
       })
-      set({ selectedId: newId })
+      set({ selectedId: newId, inspectorOpen: isCompact() })
       return newId
     },
 
@@ -161,6 +168,16 @@ export const useStore = create<State>()((set, get) => {
       const wasSelected = get().selectedId === id
       if (wasSelected) set({ selectedId: after[Math.min(idx, after.length - 1)]?.id ?? null })
     },
+
+    moveShotBy: (id, delta) =>
+      patchActive((p) => {
+        const i = p.shots.findIndex((s) => s.id === id)
+        const j = i + delta
+        if (i < 0 || j < 0 || j >= p.shots.length) return p
+        const shots = [...p.shots]
+        ;[shots[i], shots[j]] = [shots[j], shots[i]]
+        return withNumbers({ ...p, shots })
+      }),
 
     moveShot: (dragId, targetId, after) =>
       patchActive((p) => {

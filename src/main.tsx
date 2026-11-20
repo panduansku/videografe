@@ -43,7 +43,18 @@ function setupAutosave() {
   })
 }
 
+function registerPwa() {
+  // Hanya untuk mode web (iPad/browser). Di Electron (file://) tidak dipakai.
+  if (window.shotflow || !('serviceWorker' in navigator) || !location.protocol.startsWith('http')) return
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW gagal didaftarkan', e))
+  })
+  // Minta penyimpanan permanen agar iOS/Safari tidak menghapus data saat ruang menipis.
+  void navigator.storage?.persist?.()
+}
+
 loadData().then((data) => {
+  registerPwa()
   useStore.getState().hydrate(data)
   setupAutosave()
   ReactDOM.createRoot(document.getElementById('root')!).render(

@@ -7,6 +7,7 @@ import { ShotGrid } from './components/ShotGrid'
 import { Inspector } from './components/Inspector'
 import { SketchEditor } from './components/SketchEditor'
 import { PrintView } from './components/PrintView'
+import { COMPACT_QUERY, useMedia } from './lib/useMedia'
 
 function isTyping(t: EventTarget | null): boolean {
   const el = t as HTMLElement | null
@@ -15,6 +16,9 @@ function isTyping(t: EventTarget | null): boolean {
 
 export default function App() {
   const toast = useStore((s) => s.toast)
+  const compact = useMedia(COMPACT_QUERY)
+  const inspectorOpen = useStore((s) => s.inspectorOpen)
+  const setInspector = useStore((s) => s.setInspector)
 
   useEffect(() => {
     // Tempel gambar (Ctrl+V / Cmd+V) -> masuk ke shot terpilih, atau buat shot baru bila belum ada yang dipilih.
@@ -45,6 +49,9 @@ export default function App() {
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && cur) {
         e.preventDefault()
         if (window.confirm(`Hapus ${shotLabel(cur)}?`)) st.deleteShot(cur.id)
+      } else if (e.altKey && cur && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+        e.preventDefault()
+        st.moveShotBy(cur.id, e.key === 'ArrowRight' ? 1 : -1)
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
         e.preventDefault()
         const next = project.shots[Math.min(project.shots.length - 1, Math.max(0, (idx < 0 ? 0 : idx) + (e.key === 'ArrowRight' ? 1 : -1)))]
@@ -71,15 +78,26 @@ export default function App() {
 
   return (
     <>
-      <div id="app-root" className="flex h-screen flex-col bg-bg text-text">
+      <div id="app-root" className="flex h-[100dvh] flex-col bg-bg text-text">
         <Topbar />
         <div className="flex min-h-0 flex-1">
           <main className="min-w-0 flex-1">
             <ShotGrid />
           </main>
-          <aside className="w-[380px] shrink-0 border-l border-line">
-            <Inspector />
-          </aside>
+          {compact ? (
+            inspectorOpen && (
+              <>
+                <div className="fixed inset-0 z-30 bg-black/50" onClick={() => setInspector(false)} />
+                <aside className="fixed inset-y-0 right-0 z-40 w-[min(440px,94vw)] border-l border-line shadow-2xl shadow-black/60" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', background: '#1b1e23' }}>
+                  <Inspector onClose={() => setInspector(false)} />
+                </aside>
+              </>
+            )
+          ) : (
+            <aside className="w-[380px] shrink-0 border-l border-line">
+              <Inspector />
+            </aside>
+          )}
         </div>
 
         <SketchEditor />
