@@ -27,7 +27,7 @@
     "concurrently": "^9.0.1",
     "cross-env": "^7.0.3",
     "electron": "^33.0.0",
-    "electron-builder --publish never": "^25.1.8",
+    "electron-builder": "^25.1.8",
     "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
