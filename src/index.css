@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg font-sans text-text antialiased;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #343a43;
+  border-radius: 8px;
+  border: 2px solid #15171b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #444c57;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-panel2 px-2.5 py-1.5 text-[13px] font-medium text-text transition-colors hover:border-[#3b424c] hover:bg-[#292e35] disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-[#1a1407] hover:border-[#f7c26f] hover:bg-[#f7c26f];
+  }
+  .btn-ghost {
+    @apply border-transparent bg-transparent hover:bg-white/5;
+  }
+  .btn-icon {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-md text-mute transition-colors hover:bg-white/10 hover:text-text;
+  }
+  .input {
+    @apply w-full rounded-md border border-line bg-panel2 px-2.5 py-1.5 text-[13px] text-text outline-none placeholder:text-mute/60 focus:border-accent/70;
+  }
+  .label {
+    @apply mb-1 block text-[10.5px] font-semibold uppercase tracking-[0.08em] text-mute;
+  }
+  .chip {
+    @apply inline-flex items-center rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide;
+  }
+  .chip-accent {
+    @apply bg-accent/15 text-accent;
+  }
+  .chip-cyan {
+    @apply bg-accent2/15 text-accent2;
+  }
+  .chip-mute {
+    @apply bg-white/5 text-mute;
+  }
+}
+
+/* ---------- Cetak / PDF ---------- */
+#print-root {
+  display: none;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #app-root {
+    display: none !important;
+  }
+  #print-root {
+    display: block !important;
+  }
+}
